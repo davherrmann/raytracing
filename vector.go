@@ -32,9 +32,12 @@ func (a Vector) Subtract(b Vector) Vector {
 	}
 }
 
+func (v Vector) LengthSquared() float64 {
+	return v.X*v.X + v.Y*v.Y + v.Z*v.Z
+}
+
 func (v Vector) Length() float64 {
-	lengthSquared := v.X*v.X + v.Y*v.Y + v.Z*v.Z
-	return math.Sqrt(lengthSquared)
+	return math.Sqrt(v.LengthSquared())
 }
 
 func (v Vector) Normalized() Vector {

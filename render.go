@@ -2,7 +2,6 @@ package main
 
 import (
 	"image/color"
-	"math"
 )
 
 type Vec = Vector
@@ -16,32 +15,26 @@ func (r *Ray) At(t float64) Vec {
 	return r.Origin.Add(r.Direction.Multiply(t))
 }
 
-func hitSphere(center Vec, radius float64, ray Ray) float64 {
-	oc := ray.Origin.Subtract(center)
-	a := ray.Direction.Dot(ray.Direction)
-	b := 2 * oc.Dot(ray.Direction)
-	c := oc.Dot(oc) - radius*radius
-	discriminant := b*b - 4*a*c
-
-	if discriminant < 0 {
-		return -1.0
-	} else {
-		return (-b - math.Sqrt(discriminant)) / (2.0 * a)
-	}
-}
+var world = World(
+	Sphere(Vec{0, 0, -1}, 0.5),
+	Sphere(Vec{0.3, 0, -1}, 0.4),
+)
 
 func rayColor(ray Ray) color.RGBA {
-	t := hitSphere(Vec{0, 0, -1}, 0.5, ray)
-	if t > 0 {
-		normal := ray.At(t).Subtract(Vec{0, 0, -1}).Normalized()
-		return color.RGBA{
-			R: uint8((normal.X + 1) * 128),
-			G: uint8((normal.Y + 1) * 128),
-			B: uint8((normal.Z + 1) * 128),
+	hit := world(ray, 0, 10000)
+	if hit != nil {
+		t := hit.T
+		if t > 0 {
+			normal := ray.At(t).Subtract(Vec{0, 0, -1}).Normalized()
+			return color.RGBA{
+				R: uint8((normal.X + 1) * 128),
+				G: uint8((normal.Y + 1) * 128),
+				B: uint8((normal.Z + 1) * 128),
+			}
 		}
 	}
 
-	t = 0.5*ray.Direction.Normalized().Y + 1
+	t := 0.5*ray.Direction.Normalized().Y + 1
 
 	return color.RGBA{
 		R: uint8(((1.0 - t) + t*0.5) * 0xff),
