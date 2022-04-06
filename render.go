@@ -2,6 +2,7 @@ package main
 
 import (
 	"image/color"
+	"math"
 )
 
 type Vec = Vector
@@ -11,21 +12,36 @@ type Ray struct {
 	Direction Vec
 }
 
-func hitSphere(center Vec, radius float64, ray Ray) bool {
+func (r *Ray) At(t float64) Vec {
+	return r.Origin.Add(r.Direction.Multiply(t))
+}
+
+func hitSphere(center Vec, radius float64, ray Ray) float64 {
 	oc := ray.Origin.Subtract(center)
 	a := ray.Direction.Dot(ray.Direction)
 	b := 2 * oc.Dot(ray.Direction)
 	c := oc.Dot(oc) - radius*radius
 	discriminant := b*b - 4*a*c
-	return discriminant > 0
+
+	if discriminant < 0 {
+		return -1.0
+	} else {
+		return (-b - math.Sqrt(discriminant)) / (2.0 * a)
+	}
 }
 
 func rayColor(ray Ray) color.RGBA {
-	if hitSphere(Vec{0, 0, -1}, 0.5, ray) {
-		return color.RGBA{0xff, 0x00, 0x00, 0xff}
+	t := hitSphere(Vec{0, 0, -1}, 0.5, ray)
+	if t > 0 {
+		normal := ray.At(t).Subtract(Vec{0, 0, -1}).Normalized()
+		return color.RGBA{
+			R: uint8((normal.X + 1) * 128),
+			G: uint8((normal.Y + 1) * 128),
+			B: uint8((normal.Z + 1) * 128),
+		}
 	}
 
-	t := 0.5*ray.Direction.Normalized().Y + 1
+	t = 0.5*ray.Direction.Normalized().Y + 1
 
 	return color.RGBA{
 		R: uint8(((1.0 - t) + t*0.5) * 0xff),
