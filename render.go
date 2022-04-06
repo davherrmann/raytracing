@@ -22,6 +22,14 @@ func (cA Color) Add(cB Color) Color {
 	}
 }
 
+func (cA Color) Mix(cB Color) Color {
+	return Color{
+		R: cA.R * cB.R,
+		G: cA.G * cB.G,
+		B: cA.B * cB.B,
+	}
+}
+
 func (c Color) Multiply(factor float64) Color {
 	return Color{
 		R: c.R * factor,
@@ -40,9 +48,9 @@ func (r *Ray) At(t float64) Vec {
 }
 
 var world = World(
-	Sphere(Vec{0, 0, -1}, 0.5),
-	Sphere(Vec{0.3, 0, -1}, 0.4),
-	Sphere(Vec{0, -100.5, -1}, 100),
+	Sphere(Vec{0, 0, -1}, 0.5, DiffuseColor{0.5, 0.7, 1.0}),
+	Sphere(Vec{0.3, 0, -1}, 0.4, DiffuseColor{0.2, 0.8, 0.3}),
+	Sphere(Vec{0, -100.5, -1}, 100, DiffuseColor{0.95, 0.1, 0.1}),
 )
 
 func randomInUnitSphere() Vec {
@@ -62,6 +70,13 @@ func rayColor(ray Ray, bounces int) Color {
 		target := hit.Point.Add(hit.Normal).Add(randomInUnitSphere())
 		nextRay := Ray{hit.Point, target.Subtract(hit.Point)}
 		rayColor := rayColor(nextRay, bounces+1)
+
+		switch material := hit.Material.(type) {
+		case DiffuseColor:
+			rayColor = rayColor.Mix(Color(material))
+		default:
+		}
+
 		return Color{
 			R: rayColor.R / 2,
 			G: rayColor.G / 2,
@@ -71,7 +86,7 @@ func rayColor(ray Ray, bounces int) Color {
 
 	t := 0.5 * (ray.Direction.Normalized().Y + 1)
 
-	return Color{1, 1, 1}.Multiply(1 - t).Add(Color{0.5, 0.7, 1.0}.Multiply(t))
+	return Color{1, 1, 1}.Multiply(1 - t).Add(Color{0.2, 0.5, 0.7}.Multiply(t))
 }
 
 type drawFn func(x, y int, color color.RGBA)

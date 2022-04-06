@@ -6,10 +6,14 @@ type Hit struct {
 	Point    Vec
 	Normal   Vec
 	T        float64
-	Material int
+	Material Material
 }
 
 type Hittable func(ray Ray, tMin, tMax float64) *Hit
+
+type Material interface{}
+
+type DiffuseColor Color
 
 func World(hittables ...Hittable) Hittable {
 	return func(ray Ray, tMin, tMax float64) *Hit {
@@ -33,7 +37,7 @@ func World(hittables ...Hittable) Hittable {
 	}
 }
 
-func Sphere(center Vec, radius float64) Hittable {
+func Sphere(center Vec, radius float64, material Material) Hittable {
 	return func(ray Ray, tMin, tMax float64) *Hit {
 		oc := ray.Origin.Subtract(center)
 		a := ray.Direction.LengthSquared()
@@ -59,9 +63,10 @@ func Sphere(center Vec, radius float64) Hittable {
 		point := ray.At(root)
 
 		return &Hit{
-			Point:  point,
-			T:      root,
-			Normal: point.Subtract(center).Multiply(1 / radius),
+			Point:    point,
+			T:        root,
+			Normal:   point.Subtract(center).Multiply(1 / radius),
+			Material: material,
 		}
 	}
 }
