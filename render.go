@@ -2,6 +2,7 @@ package main
 
 import (
 	"image/color"
+	"math/rand"
 )
 
 type Vec = Vector
@@ -18,6 +19,7 @@ func (r *Ray) At(t float64) Vec {
 var world = World(
 	Sphere(Vec{0, 0, -1}, 0.5),
 	Sphere(Vec{0.3, 0, -1}, 0.4),
+	Sphere(Vec{0, -100.5, -1}, 100),
 )
 
 func rayColor(ray Ray) color.RGBA {
@@ -59,20 +61,36 @@ func draw(width int, height int, drawFn drawFn) {
 	vertical := Vec{0, viewportHeight, 0}
 	lowerLeftCorner := origin.Add(horizontal.Multiply(-1. / 2)).Add(vertical.Multiply(-1. / 2)).Add(Vec{0, 0, -focalLength})
 
+	// multi sampling
+	samplesPerPixel := 20
+
 	// TODO parallelize
 	for y := height - 1; y >= 0; y-- {
 		for x := 0; x < width; x++ {
-			u := float64(x) / float64(width-1)
-			v := float64(y) / float64(height-1)
+			colorSum := color.RGBA64{}
+			for s := 0; s < samplesPerPixel; s++ {
+				u := (float64(x) + rand.Float64()) / float64(width-1)
+				v := (float64(y) + rand.Float64()) / float64(height-1)
 
-			rayDirection := lowerLeftCorner. //
-								Add(horizontal.Multiply(u)). //
-								Add(vertical.Multiply(v)).   //
-								Subtract(origin)
+				rayDirection := lowerLeftCorner. //
+									Add(horizontal.Multiply(u)). //
+									Add(vertical.Multiply(v)).   //
+									Subtract(origin)
 
-			ray := Ray{origin, rayDirection}
-			color := rayColor(ray)
-			drawFn(x, height-y, color)
+				ray := Ray{origin, rayDirection}
+				color := rayColor(ray)
+
+				colorSum.R += uint16(color.R)
+				colorSum.G += uint16(color.G)
+				colorSum.B += uint16(color.B)
+			}
+
+			averageColor := color.RGBA{
+				R: uint8(colorSum.R / uint16(samplesPerPixel)),
+				G: uint8(colorSum.G / uint16(samplesPerPixel)),
+				B: uint8(colorSum.B / uint16(samplesPerPixel)),
+			}
+			drawFn(x, height-y, averageColor)
 		}
 	}
 }
