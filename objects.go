@@ -67,10 +67,11 @@ func Sphere(center Vec, radius float64, material Material) Hittable {
 		}
 
 		return &Hit{
-			Point:    point,
-			T:        root,
-			Normal:   normal,
-			Material: material,
+			Point:     point,
+			T:         root,
+			Normal:    normal,
+			Material:  material,
+			FrontFace: frontFace,
 		}
 	}
 }

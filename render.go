@@ -27,6 +27,7 @@ var (
 var world = World(
 	Sphere(Vec{0, -100.5, -1}, 100, materialGround),
 	Sphere(Vec{0, 0.3, -1}, 0.5, materialCenter),
+	Sphere(Vec{0, 0.3, -1}, -0.48, materialCenter),
 	Sphere(Vec{-1, 0, -1}, 0.5, materialLeft),
 	Sphere(Vec{1, 0, -1}, 0.5, materialRight),
 )
@@ -35,12 +36,12 @@ func randomUnitVector() Vec {
 	return Vec{rand.Float64(), rand.Float64(), rand.Float64()}.Normalized()
 }
 
-var samplesPerPixel = 10
-var maxBounces = 10
+var samplesPerPixel = 100
+var maxBounces = 100
 
 func rayColor(ray Ray, bounces int) Color {
 	if bounces >= maxBounces {
-		return Color{} // black
+		return Black
 	}
 
 	hit := world(ray, 0.001, 10000)
@@ -48,7 +49,7 @@ func rayColor(ray Ray, bounces int) Color {
 		materialHit := hit.Material(ray, *hit)
 
 		if materialHit == nil {
-			return Color{}
+			return Black
 		}
 
 		return rayColor(materialHit.Scattered, bounces+1).Mix(materialHit.Attenuation)
