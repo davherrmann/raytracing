@@ -1,6 +1,9 @@
 package main
 
-import "math"
+import (
+	"math"
+	"math/rand"
+)
 
 type MaterialHit struct {
 	Attenuation Color
@@ -44,6 +47,13 @@ func Metal(albedo Color, fuzz float64) Material {
 	}
 }
 
+func reflectance(cosTheta, refractionRatio float64) float64 {
+	// Schlick approximation for reflectance
+	r0 := (1 - refractionRatio) / (1 * refractionRatio)
+	r0 = r0 * r0
+	return r0 + (1-r0)*math.Pow(1-cosTheta, 5)
+}
+
 func Dielectric(indexOfRefraction float64) Material {
 	return func(ray Ray, hit Hit) *MaterialHit {
 		refractionRatio := indexOfRefraction
@@ -56,9 +66,10 @@ func Dielectric(indexOfRefraction float64) Material {
 		sinTheta := math.Sqrt(1 - cosTheta*cosTheta)
 
 		cannotRefract := refractionRatio*sinTheta > 1
+		schlickReflect := reflectance(cosTheta, refractionRatio) > rand.Float64()
 
 		var scatterDirection Vec
-		if cannotRefract {
+		if cannotRefract || schlickReflect {
 			scatterDirection = normalizedDirection.Reflect(hit.Normal)
 		} else {
 			scatterDirection = normalizedDirection.Refract(hit.Normal, refractionRatio)
