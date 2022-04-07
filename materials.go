@@ -47,7 +47,7 @@ func Metal(albedo Color, fuzz float64) Material {
 	}
 }
 
-func reflectance(cosTheta, refractionRatio float64) float64 {
+func schlickReflectance(cosTheta, refractionRatio float64) float64 {
 	// Schlick approximation for reflectance
 	r0 := (1 - refractionRatio) / (1 * refractionRatio)
 	r0 = r0 * r0
@@ -66,7 +66,7 @@ func Dielectric(indexOfRefraction float64) Material {
 		sinTheta := math.Sqrt(1 - cosTheta*cosTheta)
 
 		cannotRefract := refractionRatio*sinTheta > 1
-		schlickReflect := reflectance(cosTheta, refractionRatio) > rand.Float64()
+		schlickReflect := schlickReflectance(cosTheta, refractionRatio) > rand.Float64()
 
 		var scatterDirection Vec
 		if cannotRefract || schlickReflect {

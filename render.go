@@ -33,11 +33,11 @@ var world = World(
 )
 
 func randomUnitVector() Vec {
-	return Vec{rand.Float64(), rand.Float64(), rand.Float64()}.Normalized()
+	return Vec{rand.Float64()*2 - 1, rand.Float64()*2 - 1, rand.Float64()*2 - 1}.Normalized()
 }
 
-var samplesPerPixel = 100
-var maxBounces = 100
+var samplesPerPixel = 20
+var maxBounces = 20
 
 func rayColor(ray Ray, bounces int) Color {
 	if bounces >= maxBounces {
@@ -63,18 +63,11 @@ func rayColor(ray Ray, bounces int) Color {
 type drawFn func(x, y int, color color.RGBA)
 
 func draw(width int, height int, drawFn drawFn) {
-	aspectRatio := float64(width) / float64(height)
+	from := randomUnitVector()
+	from.Y = 0.5
+	from = from.Normalized().Multiply(2)
 
-	// camera & viewport
-	viewportHeight := 2.0
-	viewportWidth := aspectRatio * viewportHeight
-	focalLength := 1.0
-
-	// ray origin
-	origin := Vec{0, 0, 0}
-	horizontal := Vec{viewportWidth, 0, 0}
-	vertical := Vec{0, viewportHeight, 0}
-	lowerLeftCorner := origin.Add(horizontal.Multiply(-1. / 2)).Add(vertical.Multiply(-1. / 2)).Add(Vec{0, 0, -focalLength})
+	camera := Camera(Vec{0, 1, 0}, from, Vec{0, 0, -1}, width, height)
 
 	// TODO parallelize
 	for y := height - 1; y >= 0; y-- {
@@ -84,12 +77,7 @@ func draw(width int, height int, drawFn drawFn) {
 				u := (float64(x) + rand.Float64()) / float64(width-1)
 				v := (float64(y) + rand.Float64()) / float64(height-1)
 
-				rayDirection := lowerLeftCorner. //
-									Add(horizontal.Multiply(u)). //
-									Add(vertical.Multiply(v)).   //
-									Subtract(origin)
-
-				ray := Ray{origin, rayDirection}
+				ray := camera(u, v)
 				color := rayColor(ray, 0)
 				colorSum = colorSum.Add(color)
 			}
