@@ -45,6 +45,18 @@ func (v Vector) Normalized() Vector {
 	return v.Multiply(1 / length)
 }
 
+func (v Vector) Reflect(normal Vector) Vector {
+	return v.Subtract(normal.Multiply(2 * v.Dot(normal)))
+}
+
+func (v Vector) Refract(normal Vector, refractionRatio float64) Vector {
+	cosTheta := math.Min(v.Multiply(-1).Dot(normal), 1)
+	rOutPerp := v.Add(normal.Multiply(cosTheta)).Multiply(refractionRatio)
+	rOutParallel := normal.Multiply(-math.Sqrt(math.Abs(1 - rOutPerp.LengthSquared())))
+
+	return rOutPerp.Add(rOutParallel)
+}
+
 func (a Vector) Dot(b Vector) float64 {
 	return a.X*b.X + a.Y*b.Y + a.Z*b.Z
 }

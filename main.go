@@ -1,10 +1,15 @@
 package main
 
 import (
+	"log"
 	"net/http"
 )
 
 func main() {
 	server := NewServer()
-	http.ListenAndServe(":8080", server)
+
+	port := "8080"
+
+	log.Println("listening on port " + port)
+	http.ListenAndServe(":"+port, server)
 }

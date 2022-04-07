@@ -8,36 +8,6 @@ import (
 
 type Vec = Vector
 
-type Color struct {
-	R float64
-	G float64
-	B float64
-}
-
-func (cA Color) Add(cB Color) Color {
-	return Color{
-		R: cA.R + cB.R,
-		G: cA.G + cB.G,
-		B: cA.B + cB.B,
-	}
-}
-
-func (cA Color) Mix(cB Color) Color {
-	return Color{
-		R: cA.R * cB.R,
-		G: cA.G * cB.G,
-		B: cA.B * cB.B,
-	}
-}
-
-func (c Color) Multiply(factor float64) Color {
-	return Color{
-		R: c.R * factor,
-		G: c.G * factor,
-		B: c.B * factor,
-	}
-}
-
 type Ray struct {
 	Origin    Vec
 	Direction Vec
@@ -47,18 +17,26 @@ func (r *Ray) At(t float64) Vec {
 	return r.Origin.Add(r.Direction.Multiply(t))
 }
 
-var world = World(
-	Sphere(Vec{0, 0, -1}, 0.5, DiffuseColor{0.5, 0.7, 1.0}),
-	Sphere(Vec{0.3, 0, -1}, 0.4, DiffuseColor{0.2, 0.8, 0.3}),
-	Sphere(Vec{0, -100.5, -1}, 100, DiffuseColor{0.95, 0.1, 0.1}),
+var (
+	materialGround = Lambertian(Color{0.8, 0.8, 0.0})
+	materialCenter = Dielectric(1.5)
+	materialLeft   = Metal(Color{0.8, 0.8, 0.8}, 0.3)
+	materialRight  = Metal(Color{0.8, 0.6, 0.2}, 1.0)
 )
 
-func randomInUnitSphere() Vec {
+var world = World(
+	Sphere(Vec{0, -100.5, -1}, 100, materialGround),
+	Sphere(Vec{0, 0.3, -1}, 0.5, materialCenter),
+	Sphere(Vec{-1, 0, -1}, 0.5, materialLeft),
+	Sphere(Vec{1, 0, -1}, 0.5, materialRight),
+)
+
+func randomUnitVector() Vec {
 	return Vec{rand.Float64(), rand.Float64(), rand.Float64()}.Normalized()
 }
 
-var samplesPerPixel = 100
-var maxBounces = 50
+var samplesPerPixel = 10
+var maxBounces = 10
 
 func rayColor(ray Ray, bounces int) Color {
 	if bounces >= maxBounces {
@@ -67,26 +45,18 @@ func rayColor(ray Ray, bounces int) Color {
 
 	hit := world(ray, 0.001, 10000)
 	if hit != nil {
-		target := hit.Point.Add(hit.Normal).Add(randomInUnitSphere())
-		nextRay := Ray{hit.Point, target.Subtract(hit.Point)}
-		rayColor := rayColor(nextRay, bounces+1)
+		materialHit := hit.Material(ray, *hit)
 
-		switch material := hit.Material.(type) {
-		case DiffuseColor:
-			rayColor = rayColor.Mix(Color(material))
-		default:
+		if materialHit == nil {
+			return Color{}
 		}
 
-		return Color{
-			R: rayColor.R / 2,
-			G: rayColor.G / 2,
-			B: rayColor.B / 2,
-		}
+		return rayColor(materialHit.Scattered, bounces+1).Mix(materialHit.Attenuation)
 	}
 
 	t := 0.5 * (ray.Direction.Normalized().Y + 1)
 
-	return Color{1, 1, 1}.Multiply(1 - t).Add(Color{0.2, 0.5, 0.7}.Multiply(t))
+	return Color{1, 1, 1}.Multiply(1 - t).Add(Color{0.5, 0.7, 1.0}.Multiply(t))
 }
 
 type drawFn func(x, y int, color color.RGBA)
@@ -127,7 +97,7 @@ func draw(width int, height int, drawFn drawFn) {
 			averageColor := colorSum.Multiply(1 / float64(samplesPerPixel))
 
 			// gamma correction
-			gamma := 2.2
+			gamma := 2.0
 			gammaCorrected := Color{
 				R: math.Pow(averageColor.R, 1/gamma),
 				G: math.Pow(averageColor.G, 1/gamma),

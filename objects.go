@@ -3,17 +3,14 @@ package main
 import "math"
 
 type Hit struct {
-	Point    Vec
-	Normal   Vec
-	T        float64
-	Material Material
+	Point     Vec
+	Normal    Vec
+	T         float64
+	FrontFace bool
+	Material  Material
 }
 
 type Hittable func(ray Ray, tMin, tMax float64) *Hit
-
-type Material interface{}
-
-type DiffuseColor Color
 
 func World(hittables ...Hittable) Hittable {
 	return func(ray Ray, tMin, tMax float64) *Hit {
@@ -62,10 +59,17 @@ func Sphere(center Vec, radius float64, material Material) Hittable {
 
 		point := ray.At(root)
 
+		// normal and front face
+		normal := point.Subtract(center).Multiply(1 / radius)
+		frontFace := ray.Direction.Dot(normal) < 0
+		if !frontFace {
+			normal = normal.Multiply(-1)
+		}
+
 		return &Hit{
 			Point:    point,
 			T:        root,
-			Normal:   point.Subtract(center).Multiply(1 / radius),
+			Normal:   normal,
 			Material: material,
 		}
 	}
