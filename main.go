@@ -17,8 +17,13 @@ func main() {
 	flag.StringVar(&config.Port, "port", "8080", "listen port for server")
 	flag.Parse()
 
-	log.Println("listening on port " + config.Port)
+	// world
+	colors := []Color{{1, 0, 0}, {0, 1, 0}, {0, 0, 1}}
+	world := generateWorld(colors)
 
-	server := NewServer()
+	// server
+	server := NewServer(world)
+
+	log.Println("listening on port " + config.Port)
 	http.ListenAndServe(":"+config.Port, server)
 }

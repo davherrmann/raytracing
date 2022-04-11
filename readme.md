@@ -6,3 +6,4 @@
 - encoding/binary for little endian encoding of image bytes
 - sync for R/W mutexes
 - net/http for http server
+- context for cancelling expensive renders

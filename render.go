@@ -18,21 +18,6 @@ func (r *Ray) At(t float64) Vec {
 	return r.Origin.Add(r.Direction.Multiply(t))
 }
 
-var (
-	materialGround = Lambertian(Color{0.8, 0.8, 0.0})
-	materialCenter = Dielectric(1.5)
-	materialLeft   = Metal(Color{0.8, 0.8, 0.8}, 0.3)
-	materialRight  = Metal(Color{0.8, 0.6, 0.2}, 1.0)
-)
-
-var world = World(
-	Sphere(Vec{0, -100.5, -1}, 100, materialGround),
-	Sphere(Vec{0, 0.3, -1}, 0.5, materialCenter),
-	Sphere(Vec{0, 0.3, -1}, -0.48, materialCenter),
-	Sphere(Vec{-1, 0, -1}, 0.5, materialLeft),
-	Sphere(Vec{1, 0, -1}, 0.5, materialRight),
-)
-
 func randomUnitVector() Vec {
 	return Vec{rand.Float64()*2 - 1, rand.Float64()*2 - 1, rand.Float64()*2 - 1}.Normalized()
 }
@@ -40,7 +25,7 @@ func randomUnitVector() Vec {
 var samplesPerPixel = 10
 var maxBounces = 10
 
-func rayColor(ray Ray, bounces int) Color {
+func rayColor(world Hittable, ray Ray, bounces int) Color {
 	if bounces >= maxBounces {
 		return Black
 	}
@@ -53,7 +38,7 @@ func rayColor(ray Ray, bounces int) Color {
 			return Black
 		}
 
-		return rayColor(materialHit.Scattered, bounces+1).Mix(materialHit.Attenuation)
+		return rayColor(world, materialHit.Scattered, bounces+1).Mix(materialHit.Attenuation)
 	}
 
 	t := 0.5 * (ray.Direction.Normalized().Y + 1)
@@ -63,7 +48,7 @@ func rayColor(ray Ray, bounces int) Color {
 
 type drawFn func(x, y int, color color.RGBA)
 
-func draw(ctx context.Context, width int, height int, angle float64, drawFn drawFn) {
+func draw(ctx context.Context, world Hittable, width int, height int, angle float64, drawFn drawFn) {
 	from := Vec{
 		X: math.Cos(angle),
 		Z: math.Sin(angle),
@@ -87,7 +72,7 @@ func draw(ctx context.Context, width int, height int, angle float64, drawFn draw
 				v := (float64(y) + rand.Float64()) / float64(height-1)
 
 				ray := camera(u, v)
-				singleColor := rayColor(ray, 0)
+				singleColor := rayColor(world, ray, 0)
 
 				i := y*width + x
 				colorSums[i] = colorSums[i].Add(singleColor)

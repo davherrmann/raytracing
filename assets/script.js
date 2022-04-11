@@ -64,10 +64,15 @@ async function handleChange(event) {
   await fetch("/change", { method: "POST", body: data });
 }
 
+async function randomizeColors(event) {
+  await fetch("/randomize", { method: "POST" });
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   retryReadStream();
 });
 
 window.rt = {
   handleChange,
+  randomizeColors,
 };

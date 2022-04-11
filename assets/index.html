@@ -28,6 +28,10 @@
         margin: 1rem 0;
       }
 
+      button {
+        font-size: inherit;
+      }
+
       label {
         display: flex;
         flex-direction: row;
@@ -60,6 +64,9 @@
           max="180"
           oninput="rt.handleChange(event)"
       /></label>
+      <button type="button" onclick="rt.randomizeColors(event)">
+        Mix up colors
+      </button>
     </form>
   </body>
 </html>
