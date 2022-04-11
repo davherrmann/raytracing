@@ -18,7 +18,7 @@ func main() {
 	flag.Parse()
 
 	// world
-	colors := []Color{{1, 0, 0}, {0, 1, 0}, {0, 0, 1}}
+	colors := []Color{{0.4, 0.8, 0.97}, {0.97, 0.55, 0.28}, {0.30, 0.89, 1}}
 	world := generateWorld(colors)
 
 	// server
