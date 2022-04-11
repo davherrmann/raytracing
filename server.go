@@ -20,7 +20,7 @@ type Server struct {
 	clientsLock sync.RWMutex
 	clients     map[uuid.UUID]io.Writer // map client id -> response writer
 
-	cancelCurrentLock sync.Mutex
+	cancelCurrentLock sync.RWMutex
 	cancelCurrent     context.CancelFunc
 }
 
@@ -61,8 +61,14 @@ func (s *Server) streamImage() http.HandlerFunc {
 
 func (s *Server) drawForAllListeners(ctx context.Context, angle float64) {
 	draw(ctx, 400, 300, angle, func(x, y int, color color.RGBA) {
+		// prevent concurrent write while iterating clients
 		s.clientsLock.RLock()
 		defer s.clientsLock.RUnlock()
+
+		// prevent concurrent write on responses
+		s.cancelCurrentLock.RLock()
+		defer s.cancelCurrentLock.RUnlock()
+
 		for _, w := range s.clients {
 			// format: XX YY R G B (little endian, 8 bits per character)
 			binary.Write(w, binary.LittleEndian, uint16(x))

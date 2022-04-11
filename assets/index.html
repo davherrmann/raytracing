@@ -13,7 +13,8 @@
 
       body {
         font-family: system-ui;
-        margin: 2em;
+        margin: 0 auto;
+        padding: 2em;
         display: flex;
         flex-direction: column;
         max-width: 40em;
@@ -21,7 +22,17 @@
       }
 
       form {
-        display: contents;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+
+      label {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 1em;
       }
 
       canvas {
@@ -33,16 +44,22 @@
   </head>
   <body>
     <h1>Raytracing</h1>
-    <p>This is an example.</p>
+    <p>
+      This is a Go implementation of
+      <a href="https://raytracing.github.io">Ray Tracing in One Weekend</a>.
+    </p>
     <canvas width="400" height="300"></canvas>
     <form action="/change" method="POST">
-      <input
-        name="angle"
-        type="range"
-        min="-180"
-        max="180"
-        oninput="rt.handleChange(event)"
-      />
+      <label>
+        <span>Viewing Angle</span>
+        <input
+          style="flex-grow: 1"
+          name="angle"
+          type="range"
+          min="-180"
+          max="180"
+          oninput="rt.handleChange(event)"
+      /></label>
     </form>
   </body>
 </html>
