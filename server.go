@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/rand"
 	"encoding/binary"
 	"image/color"
 	"io"
@@ -10,15 +11,15 @@ import (
 	"os"
 	"strconv"
 	"sync"
-
-	"github.com/google/uuid"
 )
+
+type ID [16]byte
 
 type Server struct {
 	*http.ServeMux
 
 	clientsLock sync.RWMutex
-	clients     map[uuid.UUID]io.Writer // map client id -> response writer
+	clients     map[ID]io.Writer // map client id -> response writer
 
 	cancelCurrentLock sync.RWMutex
 	cancelCurrent     context.CancelFunc
@@ -28,7 +29,7 @@ func NewServer() *Server {
 	s := &Server{
 		ServeMux: http.NewServeMux(),
 
-		clients: make(map[uuid.UUID]io.Writer),
+		clients: make(map[ID]io.Writer),
 	}
 
 	s.HandleFunc("/stream", s.streamImage())
@@ -38,18 +39,24 @@ func NewServer() *Server {
 	return s
 }
 
+func generateClientID() ID {
+	id := [16]byte{}
+	rand.Read(id[:])
+	return id
+}
+
 func (s *Server) streamImage() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		id := uuid.New()
+		clientID := generateClientID()
 
 		s.clientsLock.Lock()
-		s.clients[id] = w
+		s.clients[clientID] = w
 		s.clientsLock.Unlock()
 
 		defer func() {
 			s.clientsLock.Lock()
-			delete(s.clients, id)
+			delete(s.clients, clientID)
 			s.clientsLock.Unlock()
 		}()
 
