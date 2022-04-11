@@ -2,11 +2,11 @@ package raytracing
 
 type CameraRay func(u, v float64) Ray
 
-func Camera(up, from, lookAt Vec, width, height int) CameraRay {
+func Camera(up, from, lookAt Vec, width, height int, zoom float64) CameraRay {
 	aspectRatio := float64(width) / float64(height)
 
 	// camera & viewport
-	viewportHeight := 2.0
+	viewportHeight := zoom
 	viewportWidth := aspectRatio * viewportHeight
 
 	w := from.Subtract(lookAt).Normalized()

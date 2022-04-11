@@ -22,9 +22,8 @@ type ID [16]byte
 type Server struct {
 	*http.ServeMux
 
-	world     raytracing.Hittable
-	viewAngle float64
-
+	camera      raytracing.CameraRay
+	world       raytracing.Hittable
 	clientsLock sync.RWMutex
 	clients     map[ID]io.Writer // map client id -> response writer
 
@@ -32,12 +31,13 @@ type Server struct {
 	cancelCurrent     context.CancelFunc
 }
 
-func NewServer(world raytracing.Hittable) *Server {
+func NewServer(camera raytracing.CameraRay, world raytracing.Hittable) *Server {
 	s := &Server{
 		ServeMux: http.NewServeMux(),
 
 		clients: make(map[ID]io.Writer),
 		world:   world,
+		camera:  camera,
 	}
 
 	s.HandleFunc("/stream", s.streamImage())
@@ -76,7 +76,7 @@ func (s *Server) streamImage() http.HandlerFunc {
 }
 
 func (s *Server) drawForAllListeners(ctx context.Context) {
-	raytracing.Draw(ctx, s.world, 400, 300, s.viewAngle, func(x, y int, color color.RGBA) {
+	raytracing.Draw(ctx, s.camera, s.world, 400, 300, func(x, y int, color color.RGBA) {
 		// prevent concurrent write while iterating clients
 		s.clientsLock.RLock()
 		defer s.clientsLock.RUnlock()
@@ -109,7 +109,11 @@ func (s *Server) changeValue() http.HandlerFunc {
 
 		angleInDegrees, _ := strconv.Atoi(r.FormValue("angle"))
 		angleInRadians := float64(angleInDegrees) / 180 * math.Pi
-		s.viewAngle = angleInRadians
+
+		zoomPercent, _ := strconv.Atoi(r.FormValue("zoom"))
+		zoom := float64(zoomPercent)/200 + 0.2
+
+		s.camera = GenerateCamera(angleInRadians, zoom, 400, 300)
 
 		s.drawForAllListeners(ctx)
 	}

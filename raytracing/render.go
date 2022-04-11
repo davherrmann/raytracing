@@ -48,16 +48,7 @@ func rayColor(world Hittable, ray Ray, bounces int) Color {
 
 type drawFn func(x, y int, color color.RGBA)
 
-func Draw(ctx context.Context, world Hittable, width int, height int, angle float64, drawFn drawFn) {
-	from := Vec{
-		X: math.Cos(angle),
-		Z: math.Sin(angle),
-		Y: 0.5,
-	}
-	from = from.Normalized().Multiply(2)
-
-	camera := Camera(Vec{0, 1, 0}, from, Vec{0, 0, -1}, width, height)
-
+func Draw(ctx context.Context, camera CameraRay, world Hittable, width int, height int, drawFn drawFn) {
 	colorSums := make([]Color, width*height)
 
 	// TODO parallelize

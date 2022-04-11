@@ -26,10 +26,11 @@ func main() {
 		{R: 0.97, G: 0.55, B: 0.28},
 		{R: 0.30, G: 0.89, B: 1},
 	}
+	camera := rtgo.GenerateCamera(0, 1, 400, 300)
 	world := rtgo.GenerateWorld(randomColorPalette)
 
 	// server
-	server := rtgo.NewServer(world)
+	server := rtgo.NewServer(camera, world)
 
 	log.Println("listening on port " + config.Port)
 	http.ListenAndServe(":"+config.Port, server)

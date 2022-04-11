@@ -1,12 +1,25 @@
 package rtgo
 
 import (
+	"math"
 	"math/rand"
 
 	"github.com/davherrmann/rtgo/raytracing"
 )
 
 type Vec = raytracing.Vector
+
+func GenerateCamera(angle float64, zoom float64, width, height int) raytracing.CameraRay {
+	from := Vec{
+		X: math.Cos(angle),
+		Z: math.Sin(angle),
+		Y: 0.5,
+	}
+	from = from.Normalized().Multiply(10)
+
+	camera := raytracing.Camera(Vec{X: 0, Y: 1, Z: 0}, from, Vec{X: 0, Y: 0, Z: 0}, width, height, zoom)
+	return camera
+}
 
 func GenerateWorld(colors []raytracing.Color) raytracing.Hittable {
 	randomColor := func() raytracing.Color {
