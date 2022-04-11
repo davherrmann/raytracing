@@ -48,7 +48,6 @@ async function readStream() {
 }
 
 async function retryReadStream() {
-  console.log("start listening");
   try {
     await readStream();
   } catch (err) {
@@ -58,6 +57,17 @@ async function retryReadStream() {
   }
 }
 
+async function handleChange(event) {
+  let form = event.target.closest("form");
+  let data = new FormData(form);
+
+  await fetch("/change", { method: "POST", body: data });
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   retryReadStream();
 });
+
+window.rt = {
+  handleChange,
+};

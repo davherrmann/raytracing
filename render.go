@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"image/color"
 	"math"
 	"math/rand"
@@ -62,9 +63,12 @@ func rayColor(ray Ray, bounces int) Color {
 
 type drawFn func(x, y int, color color.RGBA)
 
-func draw(width int, height int, drawFn drawFn) {
-	from := randomUnitVector()
-	from.Y = 0.5
+func draw(ctx context.Context, width int, height int, angle float64, drawFn drawFn) {
+	from := Vec{
+		X: math.Cos(angle),
+		Z: math.Sin(angle),
+		Y: 0.5,
+	}
 	from = from.Normalized().Multiply(2)
 
 	camera := Camera(Vec{0, 1, 0}, from, Vec{0, 0, -1}, width, height)
@@ -72,6 +76,10 @@ func draw(width int, height int, drawFn drawFn) {
 	// TODO parallelize
 	for y := height - 1; y >= 0; y-- {
 		for x := 0; x < width; x++ {
+			if ctx.Err() != nil {
+				return
+			}
+
 			colorSum := Color{}
 			for s := 0; s < samplesPerPixel; s++ {
 				u := (float64(x) + rand.Float64()) / float64(width-1)

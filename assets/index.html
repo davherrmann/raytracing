@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Raytracing</title>
-    <script defer src="/script.js"></script>
+    <script defer type="module" src="/script.js"></script>
     <style>
       * {
         box-sizing: border-box;
@@ -14,10 +14,20 @@
       body {
         font-family: system-ui;
         margin: 2em;
+        display: flex;
+        flex-direction: column;
+        max-width: 40em;
+        align-items: stretch;
+      }
+
+      form {
+        display: contents;
       }
 
       canvas {
         background-color: lightgray;
+        height: auto;
+        width: 100%;
       }
     </style>
   </head>
@@ -25,5 +35,14 @@
     <h1>Raytracing</h1>
     <p>This is an example.</p>
     <canvas width="400" height="300"></canvas>
+    <form action="/change" method="POST">
+      <input
+        name="angle"
+        type="range"
+        min="0"
+        max="360"
+        onchange="rt.handleChange(event)"
+      />
+    </form>
   </body>
 </html>
