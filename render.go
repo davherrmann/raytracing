@@ -37,8 +37,8 @@ func randomUnitVector() Vec {
 	return Vec{rand.Float64()*2 - 1, rand.Float64()*2 - 1, rand.Float64()*2 - 1}.Normalized()
 }
 
-var samplesPerPixel = 20
-var maxBounces = 20
+var samplesPerPixel = 10
+var maxBounces = 10
 
 func rayColor(ray Ray, bounces int) Color {
 	if bounces >= maxBounces {
@@ -73,42 +73,46 @@ func draw(ctx context.Context, width int, height int, angle float64, drawFn draw
 
 	camera := Camera(Vec{0, 1, 0}, from, Vec{0, 0, -1}, width, height)
 
-	// TODO parallelize
-	for y := height - 1; y >= 0; y-- {
-		for x := 0; x < width; x++ {
-			if ctx.Err() != nil {
-				return
-			}
+	colorSums := make([]Color, width*height)
 
-			colorSum := Color{}
-			for s := 0; s < samplesPerPixel; s++ {
+	// TODO parallelize
+	for s := 0; s < samplesPerPixel; s++ {
+		for y := height - 1; y >= 0; y-- {
+			for x := 0; x < width; x++ {
+				if ctx.Err() != nil {
+					return
+				}
+
 				u := (float64(x) + rand.Float64()) / float64(width-1)
 				v := (float64(y) + rand.Float64()) / float64(height-1)
 
 				ray := camera(u, v)
-				color := rayColor(ray, 0)
-				colorSum = colorSum.Add(color)
+				singleColor := rayColor(ray, 0)
+
+				i := y*width + x
+				colorSums[i] = colorSums[i].Add(singleColor)
+
+				if s%3 == 0 || s == samplesPerPixel-1 {
+					// average color
+					averageColor := colorSums[i].Multiply(1 / float64(s+1))
+
+					// gamma correction
+					gamma := 2.0
+					gammaCorrected := Color{
+						R: math.Pow(averageColor.R, 1/gamma),
+						G: math.Pow(averageColor.G, 1/gamma),
+						B: math.Pow(averageColor.B, 1/gamma),
+					}
+
+					// convert color
+					converted := color.RGBA{
+						R: uint8(gammaCorrected.R * 0xff),
+						G: uint8(gammaCorrected.G * 0xff),
+						B: uint8(gammaCorrected.B * 0xff),
+					}
+					drawFn(x, height-y, converted)
+				}
 			}
-
-			// average color
-			averageColor := colorSum.Multiply(1 / float64(samplesPerPixel))
-
-			// gamma correction
-			gamma := 2.0
-			gammaCorrected := Color{
-				R: math.Pow(averageColor.R, 1/gamma),
-				G: math.Pow(averageColor.G, 1/gamma),
-				B: math.Pow(averageColor.B, 1/gamma),
-			}
-
-			// convert color
-			converted := color.RGBA{
-				R: uint8(gammaCorrected.R * 0xff),
-				G: uint8(gammaCorrected.G * 0xff),
-				B: uint8(gammaCorrected.B * 0xff),
-			}
-
-			drawFn(x, height-y, converted)
 		}
 	}
 }

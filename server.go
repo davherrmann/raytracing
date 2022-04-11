@@ -18,7 +18,7 @@ type Server struct {
 	*http.ServeMux
 
 	clientsLock sync.RWMutex
-	clients     map[uuid.UUID]io.Writer // map id -> byte channel
+	clients     map[uuid.UUID]io.Writer // map client id -> response writer
 
 	cancelCurrentLock sync.Mutex
 	cancelCurrent     context.CancelFunc
@@ -57,6 +57,21 @@ func (s *Server) streamImage() http.HandlerFunc {
 	}
 }
 
+func (s *Server) drawForAllListeners(ctx context.Context, angle float64) {
+	draw(ctx, 400, 300, angle, func(x, y int, color color.RGBA) {
+		s.clientsLock.RLock()
+		defer s.clientsLock.RUnlock()
+		for _, w := range s.clients {
+			// format: XX YY R G B (little endian, 8 bits per character)
+			binary.Write(w, binary.LittleEndian, uint16(x))
+			binary.Write(w, binary.LittleEndian, uint16(y))
+			binary.Write(w, binary.LittleEndian, uint8(color.R))
+			binary.Write(w, binary.LittleEndian, uint8(color.G))
+			binary.Write(w, binary.LittleEndian, uint8(color.B))
+		}
+	})
+}
+
 func (s *Server) changeValue() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
@@ -71,17 +86,6 @@ func (s *Server) changeValue() http.HandlerFunc {
 		angleInDegrees, _ := strconv.Atoi(r.FormValue("angle"))
 		angleInRadians := float64(angleInDegrees) / 180 * math.Pi
 
-		draw(ctx, 400, 300, angleInRadians, func(x, y int, color color.RGBA) {
-			s.clientsLock.RLock()
-			defer s.clientsLock.RUnlock()
-			for _, w := range s.clients {
-				// format: XX YY R G B (little endian, 8 bits per character)
-				binary.Write(w, binary.LittleEndian, uint16(x))
-				binary.Write(w, binary.LittleEndian, uint16(y))
-				binary.Write(w, binary.LittleEndian, uint8(color.R))
-				binary.Write(w, binary.LittleEndian, uint8(color.G))
-				binary.Write(w, binary.LittleEndian, uint8(color.B))
-			}
-		})
+		s.drawForAllListeners(ctx, angleInRadians)
 	}
 }
