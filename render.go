@@ -92,7 +92,8 @@ func draw(ctx context.Context, width int, height int, angle float64, drawFn draw
 				i := y*width + x
 				colorSums[i] = colorSums[i].Add(singleColor)
 
-				if s%3 == 0 || s == samplesPerPixel-1 {
+				// send first, every nth and last sample
+				if s == 0 || s%3 == 0 || s == samplesPerPixel-1 {
 					// average color
 					averageColor := colorSums[i].Multiply(1 / float64(s+1))
 

@@ -53,6 +53,8 @@ func (s *Server) streamImage() http.HandlerFunc {
 			s.clientsLock.Unlock()
 		}()
 
+		s.drawForAllListeners(ctx, 0)
+
 		<-ctx.Done()
 	}
 }
