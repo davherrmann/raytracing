@@ -1,11 +1,9 @@
-package main
+package rtgo
 
 import (
-	"bytes"
 	"context"
 	"crypto/rand"
 	"encoding/binary"
-	"encoding/json"
 	"image/color"
 	"io"
 	"log"
@@ -14,6 +12,9 @@ import (
 	"os"
 	"strconv"
 	"sync"
+
+	"github.com/davherrmann/rtgo/external/colormind"
+	"github.com/davherrmann/rtgo/raytracing"
 )
 
 type ID [16]byte
@@ -21,7 +22,7 @@ type ID [16]byte
 type Server struct {
 	*http.ServeMux
 
-	world     Hittable
+	world     raytracing.Hittable
 	viewAngle float64
 
 	clientsLock sync.RWMutex
@@ -31,7 +32,7 @@ type Server struct {
 	cancelCurrent     context.CancelFunc
 }
 
-func NewServer(world Hittable) *Server {
+func NewServer(world raytracing.Hittable) *Server {
 	s := &Server{
 		ServeMux: http.NewServeMux(),
 
@@ -75,7 +76,7 @@ func (s *Server) streamImage() http.HandlerFunc {
 }
 
 func (s *Server) drawForAllListeners(ctx context.Context) {
-	draw(ctx, s.world, 400, 300, s.viewAngle, func(x, y int, color color.RGBA) {
+	raytracing.Draw(ctx, s.world, 400, 300, s.viewAngle, func(x, y int, color color.RGBA) {
 		// prevent concurrent write while iterating clients
 		s.clientsLock.RLock()
 		defer s.clientsLock.RUnlock()
@@ -115,46 +116,16 @@ func (s *Server) changeValue() http.HandlerFunc {
 }
 
 func (s *Server) randomizeColors() http.HandlerFunc {
-	type ColorMindRequest struct {
-		Model string `json:"model"`
-	}
-
-	type ColorMindColor [3]float64
-
-	type ColorMindResponse struct {
-		Result []ColorMindColor `json:"result"`
-	}
-
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-
-		encoded, _ := json.Marshal(ColorMindRequest{
-			Model: "default",
-		})
-
-		req, _ := http.NewRequest("POST", "http://colormind.io/api/", bytes.NewReader(encoded))
-		req = req.WithContext(ctx)
-
-		res, err := http.DefaultClient.Do(req)
+		randomColorPalette, err := colormind.FetchRandomPalette(ctx)
 		if err != nil {
-			log.Printf("error fetching random color: %v", err)
 			http.Error(w, "internal error", http.StatusInternalServerError)
+			log.Printf("error fetching random color palette: %v", err)
 			return
 		}
 
-		decoded := ColorMindResponse{}
-		err = json.NewDecoder(res.Body).Decode(&decoded)
-		if err != nil {
-			log.Printf("error decoding random color response %v", err)
-			http.Error(w, "internal error", http.StatusInternalServerError)
-			return
-		}
-
-		colors := make([]Color, len(decoded.Result))
-		for i, color := range decoded.Result {
-			colors[i] = Color{color[0] / 0xff, color[1] / 0xff, color[2] / 0xff}
-		}
-		s.world = generateWorld(colors)
+		s.world = GenerateWorld(randomColorPalette)
 		s.drawForAllListeners(ctx)
 	}
 }

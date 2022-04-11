@@ -4,6 +4,9 @@ import (
 	"flag"
 	"log"
 	"net/http"
+
+	"github.com/davherrmann/rtgo"
+	"github.com/davherrmann/rtgo/raytracing"
 )
 
 type Config struct {
@@ -18,11 +21,15 @@ func main() {
 	flag.Parse()
 
 	// world
-	colors := []Color{{0.4, 0.8, 0.97}, {0.97, 0.55, 0.28}, {0.30, 0.89, 1}}
-	world := generateWorld(colors)
+	randomColorPalette := []raytracing.Color{
+		{R: 0.4, G: 0.8, B: 0.97},
+		{R: 0.97, G: 0.55, B: 0.28},
+		{R: 0.30, G: 0.89, B: 1},
+	}
+	world := rtgo.GenerateWorld(randomColorPalette)
 
 	// server
-	server := NewServer(world)
+	server := rtgo.NewServer(world)
 
 	log.Println("listening on port " + config.Port)
 	http.ListenAndServe(":"+config.Port, server)

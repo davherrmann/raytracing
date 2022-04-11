@@ -1,7 +1,7 @@
 sinclude .env
 
 dev:
-	find . -name "*.go" -o -name "*.html" | entr -rc go run ./... -port ${PORT}
+	find . -name "*.go" -o -name "*.html" | entr -rc go run cmd/rtgo/main.go -port ${PORT}
 
 dev-race:
-	go run -race ./... -port ${PORT}
+	go run -race cmd/rtgo/main.go -port ${PORT}

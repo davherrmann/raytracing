@@ -1,4 +1,4 @@
-package main
+package raytracing
 
 import (
 	"context"
@@ -48,7 +48,7 @@ func rayColor(world Hittable, ray Ray, bounces int) Color {
 
 type drawFn func(x, y int, color color.RGBA)
 
-func draw(ctx context.Context, world Hittable, width int, height int, angle float64, drawFn drawFn) {
+func Draw(ctx context.Context, world Hittable, width int, height int, angle float64, drawFn drawFn) {
 	from := Vec{
 		X: math.Cos(angle),
 		Z: math.Sin(angle),

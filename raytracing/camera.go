@@ -1,4 +1,4 @@
-package main
+package raytracing
 
 type CameraRay func(u, v float64) Ray
 

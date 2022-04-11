@@ -1,3 +1,3 @@
-module github.com/davherrmann/raytracing
+module github.com/davherrmann/rtgo
 
 go 1.18
