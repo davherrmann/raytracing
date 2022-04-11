@@ -66,8 +66,8 @@ func (s *Server) drawForAllListeners(ctx context.Context, angle float64) {
 		defer s.clientsLock.RUnlock()
 
 		// prevent concurrent write on responses
-		s.cancelCurrentLock.RLock()
-		defer s.cancelCurrentLock.RUnlock()
+		s.cancelCurrentLock.Lock()
+		defer s.cancelCurrentLock.Unlock()
 
 		for _, w := range s.clients {
 			// format: XX YY R G B (little endian, 8 bits per character)
