@@ -10,8 +10,11 @@ import (
 	"math"
 	"net/http"
 	"os"
+	"os/signal"
 	"strconv"
 	"sync"
+	"syscall"
+	"time"
 
 	"github.com/davherrmann/rtgo/external/colormind"
 	"github.com/davherrmann/rtgo/raytracing"
@@ -29,6 +32,8 @@ type Server struct {
 
 	cancelCurrentLock sync.RWMutex
 	cancelCurrent     context.CancelFunc
+
+	done func() <-chan struct{}
 }
 
 func NewServer(camera raytracing.CameraRay, world raytracing.Hittable) *Server {
@@ -46,6 +51,34 @@ func NewServer(camera raytracing.CameraRay, world raytracing.Hittable) *Server {
 	s.HandleFunc("/", http.FileServer(http.FS(os.DirFS("assets"))).ServeHTTP)
 
 	return s
+}
+
+func (s *Server) ListenAndServe(port string) {
+	httpServer := http.Server{
+		Addr:    ":" + port,
+		Handler: s,
+	}
+
+	// graceful shutdown
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	s.done = func() <-chan struct{} {
+		return ctx.Done()
+	}
+
+	log.Println("listening on port " + port)
+	go httpServer.ListenAndServe()
+
+	<-ctx.Done()
+	stop()
+
+	log.Println("shutting down gracefully...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := httpServer.Shutdown(ctx); err != nil {
+		log.Println(err)
+	}
 }
 
 func generateClientID() ID {
@@ -71,7 +104,10 @@ func (s *Server) streamImage() http.HandlerFunc {
 
 		s.drawForAllListeners(ctx)
 
-		<-ctx.Done()
+		select {
+		case <-ctx.Done():
+		case <-s.done():
+		}
 	}
 }
 
