@@ -35,13 +35,35 @@ func GenerateWorld(colors []raytracing.Color) raytracing.Hittable {
 	materialLeft := raytracing.Metal(randomColor(), 0.3)
 	materialRight := raytracing.Metal(randomColor(), 1.0)
 
-	world := raytracing.World(
-		raytracing.Sphere(Vec{X: 0, Y: -100.5, Z: -1}, 100, materialGround),
-		raytracing.Sphere(Vec{X: 0, Y: 0.3, Z: -1}, 0.5, materialCenter),
-		raytracing.Sphere(Vec{X: 0, Y: 0.3, Z: -1}, -0.48, materialCenter),
-		raytracing.Sphere(Vec{X: -1, Y: 0, Z: -1}, 0.5, materialLeft),
-		raytracing.Sphere(Vec{X: 1, Y: 0, Z: -1}, 0.5, materialRight),
-	)
+	world := raytracing.World{
+		Objects: []raytracing.Hittable{
+			raytracing.Sphere{
+				Center:   Vec{X: 0, Y: -100.5, Z: -1},
+				Radius:   100,
+				Material: materialGround,
+			},
+			raytracing.Sphere{
+				Center:   Vec{X: 0, Y: 0.3, Z: -1},
+				Radius:   -0.48,
+				Material: materialCenter,
+			},
+			raytracing.Sphere{
+				Center:   Vec{X: 0, Y: 0.3, Z: -1},
+				Radius:   0.5,
+				Material: materialCenter,
+			},
+			raytracing.Sphere{
+				Center:   Vec{X: -1, Y: 0, Z: -1},
+				Radius:   0.5,
+				Material: materialLeft,
+			},
+			raytracing.Sphere{
+				Center:   Vec{X: 1, Y: 0, Z: -1},
+				Radius:   0.5,
+				Material: materialRight,
+			},
+		},
+	}
 
 	return world
 }

@@ -40,7 +40,7 @@ func rayColor(world Hittable, ray Ray, bounces int) Color {
 		return Black
 	}
 
-	hit := world(ray, 0.001, 10000)
+	hit := world.Hit(ray, 0.001, 10000)
 	if hit != nil {
 		materialHit := hit.Material(ray, *hit)
 

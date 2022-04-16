@@ -18,7 +18,7 @@ func TestServer(t *testing.T) {
 		LookAt: Vec{},
 		Zoom:   1,
 	}
-	world := raytracing.World()
+	world := &raytracing.World{}
 	server := rtgo.NewServer(camera, world)
 
 	test := httptest.NewServer(server)
