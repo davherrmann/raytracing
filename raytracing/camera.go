@@ -1,20 +1,24 @@
 package raytracing
 
-type CameraRay func(u, v float64) Ray
+type Camera struct {
+	Up     Vec
+	From   Vec
+	LookAt Vec
 
-func Camera(up, from, lookAt Vec, width, height int, zoom float64) CameraRay {
-	aspectRatio := float64(width) / float64(height)
+	Zoom float64
+}
 
+func (c *Camera) RayCaster(aspectRatio float64) RayCaster {
 	// camera & viewport
-	viewportHeight := zoom
+	viewportHeight := c.Zoom
 	viewportWidth := aspectRatio * viewportHeight
 
-	w := from.Subtract(lookAt).Normalized()
-	u := up.Cross(w).Normalized()
+	w := c.From.Subtract(c.LookAt).Normalized()
+	u := c.Up.Cross(w).Normalized()
 	v := w.Cross(u)
 
 	// ray origin
-	origin := from
+	origin := c.From
 	horizontal := u.Multiply(viewportWidth)
 	vertical := v.Multiply(viewportHeight)
 	lowerLeftCorner := origin. //

@@ -7,6 +7,16 @@ import (
 	"math/rand"
 )
 
+type RenderOptions struct {
+	ResolutionX int
+	ResolutionY int
+
+	SamplesPerPixel int
+	MaxBounces      int
+}
+
+type RayCaster func(u, v float64) Ray
+
 type Vec = Vector
 
 type Ray struct {
@@ -48,7 +58,12 @@ func rayColor(world Hittable, ray Ray, bounces int) Color {
 
 type drawFn func(x, y int, color color.RGBA)
 
-func Draw(ctx context.Context, camera CameraRay, world Hittable, width int, height int, drawFn drawFn) {
+func Render(ctx context.Context, world Hittable, camera Camera, options RenderOptions, drawFn drawFn) {
+	aspectRatio := float64(options.ResolutionX) / float64(options.ResolutionY)
+	rayCaster := camera.RayCaster(aspectRatio)
+
+	width := options.ResolutionX
+	height := options.ResolutionY
 	colorSums := make([]Color, width*height)
 
 	// TODO parallelize
@@ -62,7 +77,7 @@ func Draw(ctx context.Context, camera CameraRay, world Hittable, width int, heig
 				u := (float64(x) + rand.Float64()) / float64(width-1)
 				v := (float64(y) + rand.Float64()) / float64(height-1)
 
-				ray := camera(u, v)
+				ray := rayCaster(u, v)
 				singleColor := rayColor(world, ray, 0)
 
 				i := y*width + x

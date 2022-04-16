@@ -25,7 +25,7 @@ type ID [16]byte
 type Server struct {
 	*http.ServeMux
 
-	camera      raytracing.CameraRay
+	camera      raytracing.Camera
 	world       raytracing.Hittable
 	clientsLock sync.RWMutex
 	clients     map[ID]io.Writer // map client id -> response writer
@@ -36,7 +36,7 @@ type Server struct {
 	done func() <-chan struct{}
 }
 
-func NewServer(camera raytracing.CameraRay, world raytracing.Hittable) *Server {
+func NewServer(camera raytracing.Camera, world raytracing.Hittable) *Server {
 	s := &Server{
 		ServeMux: http.NewServeMux(),
 
@@ -112,7 +112,11 @@ func (s *Server) streamImage() http.HandlerFunc {
 }
 
 func (s *Server) drawForAllListeners(ctx context.Context) {
-	raytracing.Draw(ctx, s.camera, s.world, 400, 300, func(x, y int, color color.RGBA) {
+	options := raytracing.RenderOptions{
+		ResolutionX: 400,
+		ResolutionY: 300,
+	}
+	raytracing.Render(ctx, s.world, s.camera, options, func(x, y int, color color.RGBA) {
 		// prevent concurrent write while iterating clients
 		s.clientsLock.RLock()
 		defer s.clientsLock.RUnlock()

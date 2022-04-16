@@ -12,7 +12,12 @@ import (
 type Vec = raytracing.Vec
 
 func TestServer(t *testing.T) {
-	camera := raytracing.Camera(Vec{X: 1, Y: 0, Z: 0}, Vec{Z: -1}, Vec{}, 1, 1, 1)
+	camera := raytracing.Camera{
+		Up:     Vec{X: 1},
+		From:   Vec{Z: -1},
+		LookAt: Vec{},
+		Zoom:   1,
+	}
 	world := raytracing.World()
 	server := rtgo.NewServer(camera, world)
 

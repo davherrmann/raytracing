@@ -6,4 +6,5 @@
 - encoding/binary for little endian encoding of image bytes
 - sync for R/W mutexes
 - net/http for http server
+- net/http/httptest for integration tests
 - context for cancelling expensive renders

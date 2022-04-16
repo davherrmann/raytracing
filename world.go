@@ -9,7 +9,7 @@ import (
 
 type Vec = raytracing.Vector
 
-func GenerateCamera(angle float64, zoom float64, width, height int) raytracing.CameraRay {
+func GenerateCamera(angle float64, zoom float64, width, height int) raytracing.Camera {
 	from := Vec{
 		X: math.Cos(angle),
 		Z: math.Sin(angle),
@@ -17,7 +17,12 @@ func GenerateCamera(angle float64, zoom float64, width, height int) raytracing.C
 	}
 	from = from.Normalized().Multiply(10)
 
-	camera := raytracing.Camera(Vec{X: 0, Y: 1, Z: 0}, from, Vec{X: 0, Y: 0, Z: 0}, width, height, zoom)
+	camera := raytracing.Camera{
+		Up:     Vec{X: 0, Y: 1, Z: 0},
+		From:   from,
+		LookAt: Vec{X: 0, Y: 0, Z: 0},
+		Zoom:   zoom,
+	}
 	return camera
 }
 
