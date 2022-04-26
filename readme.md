@@ -2,7 +2,11 @@
 
 ### About
 
-This is a pure Go implementation (CPU-based) of [Raytracing in One Weekend](https://raytracing.github.io).
+This is a pure Go implementation (CPU-based) of [Raytracing in One Weekend](https://raytracing.github.io) with some additions:
+
+- live streaming the rendering to the browser and rendering to a canvas element
+- change camera angle and distance from the browser, immediately cancelling old renders
+- fetching random color palettes from colormind.io
 
 ### Run locally
 
